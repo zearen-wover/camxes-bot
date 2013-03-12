@@ -159,8 +159,6 @@ def camxes(text):
     if rem == flat:
         return out
     else:
-        print (trace)
-        print (flat)
         err_loc = len(flat) +\
             sum(map(lambda s: s[1], 
             filter(lambda s: s[0] <= len(flat), trace.items())))

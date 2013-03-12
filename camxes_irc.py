@@ -33,7 +33,7 @@ class CamxesBot(SingleServerIRCBot):
         self.on_msg(target, ev.arguments[0])
 
     def on_msg(self, target, text):
-        self.connection.privmsg(ev.target, self.get_camxes(text))
+        self.connection.privmsg(target, self.get_camxes(text))
 
 if __name__=='__main__':
     servers = [ServerSpec('irc.freenode.net')]

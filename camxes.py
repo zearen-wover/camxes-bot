@@ -113,12 +113,12 @@ def get_paren(depth, oc):
     return paren
 
 def parenthize(tree, depth=0):
-    ret = get_paren(depth, 0)
     if type(tree) == list:
-        ret += ''.join(map(lambda t: parenthize(t,depth+1),tree))
+        ret = get_paren(depth, 0)
+        ret += ' '.join(map(lambda t: parenthize(t,depth+1),tree))
+        ret += get_paren(depth, 1)
     else:
-        ret += ' ' + tree + ' '
-    ret += get_paren(depth, 1)
+        ret = tree
     return ret
 
 def call_jar(sentence):

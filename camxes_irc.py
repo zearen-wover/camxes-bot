@@ -3,7 +3,7 @@ from irc.bot import SingleServerIRCBot, ServerSpec
 from camxes import camxes, ParsingError
 
 class CamxesBot(SingleServerIRCBot):
-    def __init__(self, server_list, join_list, nickname='camxes', realname='Camxes'):
+    def __init__(self, server_list, join_list, nickname='camxes2', realname='Camxes2'):
         SingleServerIRCBot.__init__(self, server_list, nickname, realname)
         self.join_list = join_list
     

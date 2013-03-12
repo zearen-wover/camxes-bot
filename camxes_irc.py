@@ -37,6 +37,6 @@ class CamxesBot(SingleServerIRCBot):
 
 if __name__=='__main__':
     servers = [ServerSpec('irc.freenode.net')]
-    joins = ['#munje', '#lojban']
+    joins = ['#munje', '#lojban', '#ckule']
     camxes_bot = CamxesBot(servers, joins)
     camxes_bot.start()

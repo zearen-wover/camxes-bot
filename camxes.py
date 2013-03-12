@@ -109,7 +109,10 @@ parens = [['(',')'],['[',']'],['{','}'],['<','>']]
 def get_paren(depth, oc):
     paren = parens[depth%4][oc]
     if depth >= 4:
-        paren += str(depth // 4)
+        if oc:
+            paren += str(depth // 4)
+        else:
+            paren = str(depth // 4) + paren
     return paren
 
 def parenthize(tree, depth=0):

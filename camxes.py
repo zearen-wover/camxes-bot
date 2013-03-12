@@ -170,7 +170,8 @@ def orig_loc(loc, trace):
 def handle_zoi(tree, text, rem, trace):
     if type(tree) != list:
         return tree
-    elif len(tree) >= 3 and tree[0].lower() in ['zoi', 'la\'o', 'laho']:
+    elif len(tree) >= 3 and type(tree[0]) == str\
+            and tree[0].lower() in ['zoi', 'la\'o', 'laho']:
         zoi = tree[0]
         delim = tree[1]
         inner = flatten_tree(tree[2:-1])

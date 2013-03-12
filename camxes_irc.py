@@ -26,14 +26,17 @@ class CamxesBot(SingleServerIRCBot):
     def on_pubmsg(self, conn, ev):
         text = ev.arguments[0]
         if len(text) > 6 and text[:6] == 'camxes' and text[6] in [':',',',' ']:
-            conn.privmsg(ev.target, self.get_camxes(text[7:]))
+            self.on_msg(ev.target, text[7:])
         
     def on_privmsg(self, conn, ev):
         target = ev.source[:ev.source.find('!')]
-        conn.privmsg(target, self.get_camxes(ev.arguments[0]))
+        self.on_msg(target, ev.arguments[0])
+
+    def on_msg(self, target, text):
+        self.connection.privmsg(ev.target, self.get_camxes(text))
 
 if __name__=='__main__':
     servers = [ServerSpec('irc.freenode.net')]
-    joins = ['#munje']
+    joins = ['#munje', '#lojban']
     camxes_bot = CamxesBot(servers, joins)
     camxes_bot.start()

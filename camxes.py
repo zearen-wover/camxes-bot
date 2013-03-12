@@ -47,7 +47,17 @@ class BuildTree(ParseUtil):
                 self.inc()
                 self.assert_at('(')
                 self.inc()
-                node.append(self.build())
+                inner = self.build()
+                if ident == 'nonLojbanWord':
+                    # Remove trailing commas
+                    while type(inner) == list:
+                        inner = inner[0]
+                    pos = 0
+                    while pos < len(inner) and inner[-(pos+1)] == ',':
+                        pos += 1
+                    if pos > 0:
+                        inner = inner[:-pos]
+                node.append(inner)
                 self.assert_at(')')
                 self.inc()
             else:
@@ -149,19 +159,46 @@ def flatten_tree(tree):
     else:
         return tree
 
+def orig_loc(loc, trace):
+    return loc + sum(map(lambda s: s[1], 
+        filter(lambda s: s[0] <= loc, trace.items())))
+
+def handle_zoi(tree, text, rem, trace):
+    if type(tree) != list:
+        return tree
+    elif len(tree) >= 3 and tree[0].lower() in ['zoi', 'la\'o', 'laho']:
+        zoi = tree[0]
+        delim = tree[1]
+        inner = flatten_tree(tree[2:-1])
+        flat = zoi + delim + inner + delim
+        
+        loc = rem.find(flat)
+        if loc < 0 or inner == '':
+            inner = ' '.join(tree[2:-1])
+        else:
+            start = orig_loc(rem[loc:loc+len(flat)].find(inner)-1, trace) + 1
+            while text[start] in '. ':
+                start += 1
+            stop = orig_loc(loc + len(flat)-1, trace) - len(delim) - 1
+            while stop > start and text[stop] in '. ':
+                stop -= 1
+            stop += 1
+            inner = text[start:stop]
+        return [zoi,delim,'"'+inner+'"',delim]
+    else:
+        return list(map(lambda t: handle_zoi(t, text, rem, trace), tree))
+    
 def camxes(text):
     text = unicodedata.normalize('NFC', text)
     pre = preprocess(text)
     tree = trim_tree(BuildTree(call_jar(pre)).build())
-    out = parenthize(tree)
     flat = flatten_tree(tree)
     rem, trace = remove_track(pre)
+    out = parenthize(handle_zoi(tree, text, rem, trace))
     if rem == flat:
         return out
     else:
-        err_loc = len(flat) +\
-            sum(map(lambda s: s[1], 
-            filter(lambda s: s[0] <= len(flat), trace.items())))
+        err_loc = orig_loc(len(flat), trace)
         return 'na gendra: ' + text[:err_loc] + '_\u26A0_ ' + text[err_loc:]
 
 if __name__=='__main__':

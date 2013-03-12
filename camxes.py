@@ -1,4 +1,8 @@
+# coding=UTF-8
+
+from itertools import *
 from subprocess import Popen, PIPE
+import unicodedata
 
 class ParsingError(ValueError):
     pass
@@ -11,8 +15,8 @@ class ParseUtil():
     def at(self):
         return self.resp[self.pos]
     
-    def inc(self, Δ=1):
-        self.pos += Δ
+    def inc(self, delta=1):
+        self.pos += delta
 
     def eof(self):
         return self.pos >= len(self.resp)
@@ -51,6 +55,32 @@ class BuildTree(ParseUtil):
             self.skip_whitespace()
         return node
 
+def char_range(start, stop, step=1):
+    return map(chr, range(ord(start), ord(stop)+1, step))
+accents = set(filter(lambda c: c != 'a', \
+    unicodedata.normalize('NFD','áàäǎāȧạ')))
+def accent_set(ch):
+    return filter(lambda c: c !=ch, unicodedata.normalize('NFC', 
+        ''.join(map(lambda c: ch + c, accents))))
+# Change accented chars -> cap chars and remove special symbols
+valid_chars = \
+    set(char_range('a', 'z')) |\
+    set(char_range('A', 'z')) |\
+    set(char_range('0', '9')) |\
+    set("'`., \t")
+replacement_table={}
+for v_i in 'aeiouy':
+    for v_j in accent_set(v_i):
+        replacement_table[v_j] = v_i.upper()
+    for v_j in accent_set(v_i.upper()):
+        replacement_table[v_j] = v_i.upper()
+
+def preprocess(text):
+    text = ''.join(map(lambda c: replacement_table.get(c, c), text))
+    text = ''.join(map(lambda c: c if c in valid_chars else ' ', text))
+    return text
+
+
 def trim_tree(tree):
     while type(tree) == list and len(tree) == 1:
         tree = tree[0]
@@ -58,9 +88,6 @@ def trim_tree(tree):
         return list(map(trim_tree, tree))
     else:
         return tree
-
-def flatten_zoi(tree):
-    return tree
 
 parens = [['(',')'],['[',']'],['{','}'],['<','>']]
 
@@ -88,9 +115,56 @@ def call_jar(sentence):
     p.stdin.close()
     return str(resp, 'UTF-8')
 
-def camxes(sentence):
-    return parenthize(flatten_zoi(trim_tree(
-        BuildTree(call_jar(sentence)).build())))
+def remove_track(text):
+    ret = ''
+    pos_t = 0
+    pos_r = 0
+    track = {}
+    while pos_t < len(text):
+        if text[pos_t] == ',':
+            start = pos_t
+            pos_t += 1
+            while pos_t < len(text) and text[pos_t] == ',':
+                pos_t += 1
+            if pos_t >= len(text) or text[pos_t] in '. ':
+                # skip, it's whitespace
+                cur = track.get(pos_r, 0)
+                track[pos_r] = cur + pos_t - start
+            else:
+                ret += text[start:pos_t]
+                pos_r += pos_t - start
+        elif text[pos_t] in '. ':
+            cur = track.get(pos_r, 0)
+            track[pos_r] = cur + 1
+            pos_t += 1
+        else:
+            ret += text[pos_t]
+            pos_t += 1
+            pos_r += 1
+    return (ret, track)
+    
+def flatten_tree(tree):
+    if type(tree) == list:
+        return ''.join(map(flatten_tree, tree))
+    else:
+        return tree
+
+def camxes(text):
+    text = unicodedata.normalize('NFC', text)
+    pre = preprocess(text)
+    tree = trim_tree(BuildTree(call_jar(pre)).build())
+    out = parenthize(tree)
+    flat = flatten_tree(tree)
+    rem, trace = remove_track(pre)
+    if rem == flat:
+        return out
+    else:
+        print (trace)
+        print (flat)
+        err_loc = len(flat) +\
+            sum(map(lambda s: s[1], 
+            filter(lambda s: s[0] <= len(flat), trace.items())))
+        return 'na gendra: ' + text[:err_loc] + '_\u26A0_ ' + text[err_loc:]
 
 if __name__=='__main__':
     print(camxes(input()))

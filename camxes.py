@@ -67,9 +67,11 @@ class BuildTree(ParseUtil):
 
 def char_range(start, stop, step=1):
     return map(chr, range(ord(start), ord(stop)+1, step))
-accents = set(filter(lambda c: c != 'a', \
-    unicodedata.normalize('NFD','áàäǎāȧạ')))
-def accent_set(ch):
+stressed = set(filter(lambda c: c != 'a', \
+    unicodedata.normalize('NFD','áà')))
+stripped = set(filter(lambda c: c != 'a', \
+    unicodedata.normalize('NFD','äǎăâāȧạ')))
+def accent_set(ch, accents):
     return filter(lambda c: c !=ch, unicodedata.normalize('NFC', 
         ''.join(map(lambda c: ch + c, accents))))
 # Change accented chars -> cap chars and remove special symbols
@@ -80,9 +82,11 @@ valid_chars = \
     set("'`., \t")
 replacement_table={}
 for v_i in 'aeiouy':
-    for v_j in accent_set(v_i):
+    for v_j in accent_set(v_i, stressed):
         replacement_table[v_j] = v_i.upper()
-    for v_j in accent_set(v_i.upper()):
+    for v_j in accent_set(v_i, stripped):
+        replacement_table[v_j] = v_i
+    for v_j in accent_set(v_i.upper(), stressed | stripped):
         replacement_table[v_j] = v_i.upper()
 
 def preprocess(text):

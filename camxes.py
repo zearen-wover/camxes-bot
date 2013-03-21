@@ -1,6 +1,7 @@
 # coding=UTF-8
 
 from itertools import *
+from functools import *
 from subprocess import Popen, PIPE
 import unicodedata
 
@@ -106,20 +107,23 @@ def trim_tree(tree):
 parens = [['(',')'],['[',']'],['{','}'],['<','>']]
 
 # paren order () [] {} <>
-def get_paren(depth, oc):
+def get_paren(depth, oc, getsNum):
     paren = parens[depth%4][oc]
-    if depth >= 4:
+    if getsNum:
         if oc:
-            paren += str(depth // 4)
+            paren += str(depth)
         else:
-            paren = str(depth // 4) + paren
+            paren = str(depth) + paren
     return paren
 
 def parenthize(tree, depth=0):
     if type(tree) == list:
-        ret = get_paren(depth, 0)
+        getsNum = not reduce(bool.__and__, 
+            map(lambda t: type(t) != list, tree),
+            True)
+        ret = get_paren(depth, 0, getsNum)
         ret += ' '.join(map(lambda t: parenthize(t,depth+1),tree))
-        ret += get_paren(depth, 1)
+        ret += get_paren(depth, 1, getsNum)
     else:
         ret = tree
     return ret

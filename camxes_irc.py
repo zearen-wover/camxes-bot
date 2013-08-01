@@ -1,3 +1,5 @@
+import time
+
 from irc.client import *
 from irc.bot import SingleServerIRCBot, ServerSpec
 from camxes import camxes, ParsingError
@@ -38,5 +40,15 @@ class CamxesBot(SingleServerIRCBot):
 if __name__=='__main__':
     servers = [ServerSpec('irc.freenode.net')]
     joins = ['#munje', '#lojban', '#ckule']
-    camxes_bot = CamxesBot(servers, joins)
-    camxes_bot.start()
+    stop = False
+    while not stop:
+        stop = True
+        try:
+            camxes_bot = CamxesBot(servers, joins)
+            camxes_bot.start()
+        except KeyboardInterrupt:
+            stop = True
+        except Exception as e:
+            print(e)
+        del camxes_bot
+        time.sleep(120)
